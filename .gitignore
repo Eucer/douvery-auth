@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test
+coverage/
+
+# Turbo
+.turbo/
+
+# Misc
+*.tgz
+.changeset/*.md
+!.changeset/README.md

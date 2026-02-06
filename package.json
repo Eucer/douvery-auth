@@ -1,0 +1,68 @@
+{
+  "name": "@douvery/auth",
+  "version": "0.2.1",
+  "description": "OAuth 2.0/OIDC client for Douvery authentication",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react/index.js",
+      "types": "./dist/react/index.d.ts"
+    },
+    "./qwik": {
+      "import": "./dist/qwik/index.js",
+      "types": "./dist/qwik/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:core && npm run build:react && npm run build:qwik",
+    "build:core": "tsup src/index.ts --format esm --dts --out-dir dist",
+    "build:react": "tsup src/react/index.tsx --format esm --dts --out-dir dist/react --external react --external @douvery/auth --tsconfig tsconfig.react.json",
+    "build:qwik": "tsup src/qwik/index.tsx --format esm --dts --out-dir dist/qwik --external @builder.io/qwik --external @douvery/auth --tsconfig tsconfig.qwik.json",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "douvery",
+    "auth",
+    "oauth",
+    "oidc",
+    "pkce",
+    "react",
+    "qwik"
+  ],
+  "author": "Douvery",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/douvery/douvery-auth.git"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "@builder.io/qwik": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "@builder.io/qwik": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "react": "^18.2.0",
+    "@types/react": "^18.2.0",
+    "@builder.io/qwik": "^1.9.0"
+  }
+}
