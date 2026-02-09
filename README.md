@@ -29,6 +29,9 @@
 - 📡 **Event System** - Subscribe to auth events (login, logout, token refresh)
 - 🌐 **SSR Compatible** - Works with server-side rendering
 - 🪶 **Lightweight** - ~23KB core, framework adapters add minimal overhead
+- 🧭 **Auth Navigation** - Built-in helpers for all auth flows (register, recover, verify, switch account, etc.)
+- 🔗 **URL Builders** - Generate auth URLs for `<a>` tags without programmatic redirect
+- 🔑 **Token Revocation** - Revoke access/refresh tokens via RFC 7009
 
 ---
 
@@ -197,6 +200,31 @@ fetch('/api/protected', {
 
 // 7. Logout
 await auth.logout();
+
+// 8. Navigation helpers — redirect to any auth flow
+auth.selectAccount({ returnTo: '/dashboard' });
+auth.addAccount({ loginHint: 'other@email.com' });
+auth.register({ email: 'new@email.com' });
+auth.recoverAccount({ email: 'user@email.com' });
+auth.verifyAccount();
+auth.upgradeAccount();
+auth.setupPasskey();
+auth.setupAddress();
+
+// 9. URL builders (don't redirect, useful for <a> tags)
+const url = auth.buildSelectAccountUrl({ returnTo: '/home' });
+console.log(url.url);   // "https://auth.douvery.com/select-account?continue=/home"
+url.redirect();          // Navigate to the URL
+url.open();              // Open in new tab
+
+// 10. Revoke a token
+await auth.revokeToken();
+await auth.revokeToken({ tokenTypeHint: 'refresh_token' });
+
+// 11. Session status helpers
+auth.isSessionExpired();        // true/false
+auth.needsEmailVerification();  // true/false
+auth.isGuestAccount();          // true/false
 ```
 
 ---
@@ -280,6 +308,106 @@ await auth.logout({
 });
 ```
 
+### Navigation Options
+
+All navigation methods accept a common base of options:
+
+```typescript
+interface AuthNavigationOptions {
+  returnTo?: string;      // URL to return to after the action
+  clientId?: string;      // OAuth client_id for branded experiences
+  openInNewTab?: boolean; // Open in new tab instead of redirect
+}
+```
+
+```typescript
+// Select / switch account
+auth.selectAccount({
+  returnTo: '/dashboard',
+  loginHint: 'user@email.com', // Pre-select a specific account
+});
+
+// Add another account (multi-session)
+auth.addAccount({
+  loginHint: 'another@email.com',
+});
+
+// Register a new account
+auth.register({
+  email: 'new@email.com',
+  firstName: 'John',
+  lastName: 'Doe',
+  uiLocales: 'es',
+});
+
+// Recover account (forgot password)
+auth.recoverAccount({
+  email: 'user@email.com',
+});
+
+// Verify account (email verification)
+auth.verifyAccount({
+  email: 'user@email.com',
+});
+
+// Upgrade guest account to full account
+auth.upgradeAccount({
+  scopes: ['profile', 'email'],
+});
+
+// Setup passkey
+auth.setupPasskey({ returnTo: '/settings' });
+
+// Setup address
+auth.setupAddress({ returnTo: '/checkout' });
+```
+
+### URL Builders
+
+Every navigation method has a corresponding `build*Url()` method that returns an `AuthUrl` object without redirecting. Useful for `<a>` tags or custom navigation logic:
+
+```typescript
+const url = auth.buildRegisterUrl({ email: 'hint@test.com' });
+
+url.url;        // "https://auth.douvery.com/register?email=hint%40test.com"
+url.redirect(); // window.location.href = url
+url.open();     // window.open(url, '_blank')
+```
+
+| Builder | Path |
+|---|---|
+| `buildLoginUrl()` | `/login` |
+| `buildLogoutUrl()` | `/logout` |
+| `buildSelectAccountUrl()` | `/select-account` |
+| `buildAddAccountUrl()` | `/login?add_account=true` |
+| `buildRegisterUrl()` | `/register` |
+| `buildRecoverAccountUrl()` | `/recover-account` |
+| `buildVerifyAccountUrl()` | `/verify-account` |
+| `buildUpgradeAccountUrl()` | `/upgrade-account` |
+| `buildSetupPasskeyUrl()` | `/setup-passkey` |
+| `buildSetupAddressUrl()` | `/setup-address` |
+
+### Token Revocation
+
+```typescript
+// Revoke current access token
+await auth.revokeToken();
+
+// Revoke a specific token
+await auth.revokeToken({
+  token: 'specific-token-value',
+  tokenTypeHint: 'refresh_token',
+});
+```
+
+### Session Status Helpers
+
+```typescript
+auth.isSessionExpired();        // true if access token is expired
+auth.needsEmailVerification();  // true if email is not verified
+auth.isGuestAccount();          // true if account type is guest
+```
+
 ### Auth State
 
 ```typescript
@@ -330,7 +458,47 @@ type AuthEvent =
 | `useUser()` | Current user or null |
 | `useIsAuthenticated()` | Boolean authentication status |
 | `useAccessToken()` | `{ accessToken, getAccessToken }` |
-| `useAuthActions()` | `{ login, logout, isLoading }` |
+| `useAuthActions()` | All auth actions (see below) |
+| `useAuthUrls()` | URL builders for all auth pages |
+| `useSessionStatus()` | `{ isExpired, needsVerification, isGuest }` |
+
+#### `useAuthActions()` — Full list
+
+```tsx
+const {
+  login,           // (options?: LoginOptions) => Promise<void>
+  logout,          // (options?: LogoutOptions) => Promise<void>
+  selectAccount,   // (options?: SelectAccountOptions) => void
+  addAccount,      // (options?: AddAccountOptions) => void
+  register,        // (options?: RegisterOptions) => void
+  recoverAccount,  // (options?: RecoverAccountOptions) => void
+  verifyAccount,   // (options?: VerifyAccountOptions) => void
+  upgradeAccount,  // (options?: UpgradeAccountOptions) => void
+  setupPasskey,    // (options?: SetupPasskeyOptions) => void
+  setupAddress,    // (options?: SetupAddressOptions) => void
+  revokeToken,     // (options?: RevokeTokenOptions) => Promise<void>
+  isLoading,       // boolean
+} = useAuthActions();
+```
+
+#### `useAuthUrls()` — URL builders for links
+
+```tsx
+const urls = useAuthUrls();
+
+<a href={urls.registerUrl().url}>Create account</a>
+<a href={urls.recoverAccountUrl({ email: user.email }).url}>Forgot password?</a>
+<a href={urls.selectAccountUrl().url}>Switch account</a>
+```
+
+#### `useSessionStatus()` — Reactive status
+
+```tsx
+const { isExpired, needsVerification, isGuest } = useSessionStatus();
+
+{needsVerification && <Banner>Please verify your email</Banner>}
+{isGuest && <button onClick={() => upgradeAccount()}>Upgrade account</button>}
+```
 
 ### DouveryAuthProvider Props
 
@@ -354,7 +522,36 @@ interface DouveryAuthProviderProps {
 | `useDouveryAuth()` | Context | Full context with signals and client |
 | `useUser()` | `Signal<User \| null>` | Reactive user signal |
 | `useIsAuthenticated()` | `Signal<boolean>` | Reactive auth status |
-| `useAuthActions()` | `{ login, logout, isLoading }` | Auth actions |
+| `useAuthActions()` | All actions + `isLoading` | Auth actions (same as React) |
+| `useAuthUrls()` | URL builders | Build URLs for auth pages |
+| `useSessionStatus()` | `{ isExpired, needsVerification, isGuest }` | Reactive session signals |
+
+#### Qwik example with navigation
+
+```tsx
+import { component$ } from '@builder.io/qwik';
+import { useAuthActions, useSessionStatus } from '@douvery/auth/qwik';
+
+export const AccountMenu = component$(() => {
+  const { selectAccount, addAccount, recoverAccount, upgradeAccount } = useAuthActions();
+  const { isGuest, needsVerification } = useSessionStatus();
+
+  return (
+    <div>
+      <button onClick$={() => selectAccount({ returnTo: window.location.href })}>
+        Switch account
+      </button>
+      <button onClick$={() => addAccount()}>Add account</button>
+      {isGuest.value && (
+        <button onClick$={() => upgradeAccount()}>Upgrade account</button>
+      )}
+      {needsVerification.value && (
+        <button onClick$={() => verifyAccount()}>Verify email</button>
+      )}
+    </div>
+  );
+});
+```
 
 ---
 

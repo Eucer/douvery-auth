@@ -21,6 +21,16 @@ import {
   type User,
   type LoginOptions,
   type LogoutOptions,
+  type SelectAccountOptions,
+  type RegisterOptions,
+  type RecoverAccountOptions,
+  type VerifyAccountOptions,
+  type UpgradeAccountOptions,
+  type SetupPasskeyOptions,
+  type SetupAddressOptions,
+  type AddAccountOptions,
+  type RevokeTokenOptions,
+  type AuthUrl,
 } from "../index";
 
 interface DouveryAuthContextValue {
@@ -136,7 +146,109 @@ export function useAuthActions() {
     }
   };
 
-  return { login, logout, isLoading };
+  const selectAccount = (options?: SelectAccountOptions) => {
+    client.selectAccount(options);
+  };
+
+  const addAccount = (options?: AddAccountOptions) => {
+    client.addAccount(options);
+  };
+
+  const register = (options?: RegisterOptions) => {
+    client.register(options);
+  };
+
+  const recoverAccount = (options?: RecoverAccountOptions) => {
+    client.recoverAccount(options);
+  };
+
+  const verifyAccount = (options?: VerifyAccountOptions) => {
+    client.verifyAccount(options);
+  };
+
+  const upgradeAccount = (options?: UpgradeAccountOptions) => {
+    client.upgradeAccount(options);
+  };
+
+  const setupPasskey = (options?: SetupPasskeyOptions) => {
+    client.setupPasskey(options);
+  };
+
+  const setupAddress = (options?: SetupAddressOptions) => {
+    client.setupAddress(options);
+  };
+
+  const revokeToken = async (options?: RevokeTokenOptions) => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      await client.revokeToken(options);
+    } catch (err) {
+      error.value = err instanceof Error ? err : new Error(String(err));
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  return {
+    login,
+    logout,
+    selectAccount,
+    addAccount,
+    register,
+    recoverAccount,
+    verifyAccount,
+    upgradeAccount,
+    setupPasskey,
+    setupAddress,
+    revokeToken,
+    isLoading,
+  };
+}
+
+/** Get URL builders for auth pages (non-redirecting, useful for <a> tags) */
+export function useAuthUrls() {
+  const { client } = useDouveryAuth();
+  return {
+    loginUrl: (options?: LoginOptions): AuthUrl =>
+      client.buildLoginUrl(options),
+    logoutUrl: (options?: LogoutOptions): AuthUrl =>
+      client.buildLogoutUrl(options),
+    selectAccountUrl: (options?: SelectAccountOptions): AuthUrl =>
+      client.buildSelectAccountUrl(options),
+    addAccountUrl: (options?: AddAccountOptions): AuthUrl =>
+      client.buildAddAccountUrl(options),
+    registerUrl: (options?: RegisterOptions): AuthUrl =>
+      client.buildRegisterUrl(options),
+    recoverAccountUrl: (options?: RecoverAccountOptions): AuthUrl =>
+      client.buildRecoverAccountUrl(options),
+    verifyAccountUrl: (options?: VerifyAccountOptions): AuthUrl =>
+      client.buildVerifyAccountUrl(options),
+    upgradeAccountUrl: (options?: UpgradeAccountOptions): AuthUrl =>
+      client.buildUpgradeAccountUrl(options),
+    setupPasskeyUrl: (options?: SetupPasskeyOptions): AuthUrl =>
+      client.buildSetupPasskeyUrl(options),
+    setupAddressUrl: (options?: SetupAddressOptions): AuthUrl =>
+      client.buildSetupAddressUrl(options),
+  };
+}
+
+/** Get session status helpers */
+export function useSessionStatus() {
+  const { client, state } = useDouveryAuth();
+  const isExpired = useSignal(client.isSessionExpired());
+  const needsVerification = useSignal(client.needsEmailVerification());
+  const isGuest = useSignal(client.isGuestAccount());
+
+  useTask$(({ track }) => {
+    track(() => state.value);
+    isExpired.value = client.isSessionExpired();
+    needsVerification.value = client.needsEmailVerification();
+    isGuest.value = client.isGuestAccount();
+  });
+
+  return { isExpired, needsVerification, isGuest };
 }
 
 export { DouveryAuthClient, createDouveryAuth } from "../index";
@@ -146,4 +258,14 @@ export type {
   User,
   LoginOptions,
   LogoutOptions,
+  SelectAccountOptions,
+  RegisterOptions,
+  RecoverAccountOptions,
+  VerifyAccountOptions,
+  UpgradeAccountOptions,
+  SetupPasskeyOptions,
+  SetupAddressOptions,
+  AddAccountOptions,
+  RevokeTokenOptions,
+  AuthUrl,
 } from "../index";

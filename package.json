@@ -1,6 +1,6 @@
 {
   "name": "@douvery/auth",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "OAuth 2.0/OIDC client for Douvery authentication",
   "type": "module",
   "main": "./dist/index.js",

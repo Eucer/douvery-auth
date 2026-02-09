@@ -19,6 +19,16 @@ import {
   type User,
   type LoginOptions,
   type LogoutOptions,
+  type SelectAccountOptions,
+  type RegisterOptions,
+  type RecoverAccountOptions,
+  type VerifyAccountOptions,
+  type UpgradeAccountOptions,
+  type SetupPasskeyOptions,
+  type SetupAddressOptions,
+  type AddAccountOptions,
+  type RevokeTokenOptions,
+  type AuthUrl,
 } from "../index";
 
 interface DouveryAuthContextValue {
@@ -31,6 +41,15 @@ interface DouveryAuthContextValue {
   error: Error | null;
   login: (options?: LoginOptions) => Promise<void>;
   logout: (options?: LogoutOptions) => Promise<void>;
+  selectAccount: (options?: SelectAccountOptions) => void;
+  addAccount: (options?: AddAccountOptions) => void;
+  register: (options?: RegisterOptions) => void;
+  recoverAccount: (options?: RecoverAccountOptions) => void;
+  verifyAccount: (options?: VerifyAccountOptions) => void;
+  upgradeAccount: (options?: UpgradeAccountOptions) => void;
+  setupPasskey: (options?: SetupPasskeyOptions) => void;
+  setupAddress: (options?: SetupAddressOptions) => void;
+  revokeToken: (options?: RevokeTokenOptions) => Promise<void>;
   getAccessToken: () => Promise<string | null>;
   refreshTokens: () => Promise<void>;
   client: DouveryAuthClient;
@@ -156,6 +175,64 @@ export function DouveryAuthProvider({
     }
   }, [client, onError]);
 
+  const selectAccount = useCallback(
+    (options?: SelectAccountOptions) => client.selectAccount(options),
+    [client],
+  );
+
+  const addAccount = useCallback(
+    (options?: AddAccountOptions) => client.addAccount(options),
+    [client],
+  );
+
+  const register = useCallback(
+    (options?: RegisterOptions) => client.register(options),
+    [client],
+  );
+
+  const recoverAccount = useCallback(
+    (options?: RecoverAccountOptions) => client.recoverAccount(options),
+    [client],
+  );
+
+  const verifyAccount = useCallback(
+    (options?: VerifyAccountOptions) => client.verifyAccount(options),
+    [client],
+  );
+
+  const upgradeAccount = useCallback(
+    (options?: UpgradeAccountOptions) => client.upgradeAccount(options),
+    [client],
+  );
+
+  const setupPasskey = useCallback(
+    (options?: SetupPasskeyOptions) => client.setupPasskey(options),
+    [client],
+  );
+
+  const setupAddress = useCallback(
+    (options?: SetupAddressOptions) => client.setupAddress(options),
+    [client],
+  );
+
+  const revokeToken = useCallback(
+    async (options?: RevokeTokenOptions) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        await client.revokeToken(options);
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        setError(e);
+        onError?.(e);
+        throw e;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [client, onError],
+  );
+
   const value = useMemo<DouveryAuthContextValue>(
     () => ({
       state,
@@ -167,6 +244,15 @@ export function DouveryAuthProvider({
       error,
       login,
       logout,
+      selectAccount,
+      addAccount,
+      register,
+      recoverAccount,
+      verifyAccount,
+      upgradeAccount,
+      setupPasskey,
+      setupAddress,
+      revokeToken,
       getAccessToken,
       refreshTokens,
       client,
@@ -178,6 +264,15 @@ export function DouveryAuthProvider({
       error,
       login,
       logout,
+      selectAccount,
+      addAccount,
+      register,
+      recoverAccount,
+      verifyAccount,
+      upgradeAccount,
+      setupPasskey,
+      setupAddress,
+      revokeToken,
       getAccessToken,
       refreshTokens,
       client,
@@ -213,8 +308,77 @@ export function useAccessToken() {
 }
 
 export function useAuthActions() {
-  const { login, logout, isLoading } = useDouveryAuth();
-  return { login, logout, isLoading };
+  const {
+    login,
+    logout,
+    selectAccount,
+    addAccount,
+    register,
+    recoverAccount,
+    verifyAccount,
+    upgradeAccount,
+    setupPasskey,
+    setupAddress,
+    revokeToken,
+    isLoading,
+  } = useDouveryAuth();
+  return {
+    login,
+    logout,
+    selectAccount,
+    addAccount,
+    register,
+    recoverAccount,
+    verifyAccount,
+    upgradeAccount,
+    setupPasskey,
+    setupAddress,
+    revokeToken,
+    isLoading,
+  };
+}
+
+/** Get URL builders for auth pages (non-redirecting, useful for <a> tags) */
+export function useAuthUrls() {
+  const { client } = useDouveryAuth();
+  return useMemo(
+    () => ({
+      loginUrl: (options?: LoginOptions): AuthUrl =>
+        client.buildLoginUrl(options),
+      logoutUrl: (options?: LogoutOptions): AuthUrl =>
+        client.buildLogoutUrl(options),
+      selectAccountUrl: (options?: SelectAccountOptions): AuthUrl =>
+        client.buildSelectAccountUrl(options),
+      addAccountUrl: (options?: AddAccountOptions): AuthUrl =>
+        client.buildAddAccountUrl(options),
+      registerUrl: (options?: RegisterOptions): AuthUrl =>
+        client.buildRegisterUrl(options),
+      recoverAccountUrl: (options?: RecoverAccountOptions): AuthUrl =>
+        client.buildRecoverAccountUrl(options),
+      verifyAccountUrl: (options?: VerifyAccountOptions): AuthUrl =>
+        client.buildVerifyAccountUrl(options),
+      upgradeAccountUrl: (options?: UpgradeAccountOptions): AuthUrl =>
+        client.buildUpgradeAccountUrl(options),
+      setupPasskeyUrl: (options?: SetupPasskeyOptions): AuthUrl =>
+        client.buildSetupPasskeyUrl(options),
+      setupAddressUrl: (options?: SetupAddressOptions): AuthUrl =>
+        client.buildSetupAddressUrl(options),
+    }),
+    [client],
+  );
+}
+
+/** Get session status helpers */
+export function useSessionStatus() {
+  const { client, state } = useDouveryAuth();
+  return useMemo(
+    () => ({
+      isExpired: client.isSessionExpired(),
+      needsVerification: client.needsEmailVerification(),
+      isGuest: client.isGuestAccount(),
+    }),
+    [client, state],
+  );
 }
 
 export { DouveryAuthClient, createDouveryAuth } from "../index";
@@ -224,4 +388,14 @@ export type {
   User,
   LoginOptions,
   LogoutOptions,
+  SelectAccountOptions,
+  RegisterOptions,
+  RecoverAccountOptions,
+  VerifyAccountOptions,
+  UpgradeAccountOptions,
+  SetupPasskeyOptions,
+  SetupAddressOptions,
+  AddAccountOptions,
+  RevokeTokenOptions,
+  AuthUrl,
 } from "../index";

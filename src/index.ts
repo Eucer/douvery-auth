@@ -25,6 +25,18 @@ export type {
   PKCEPair,
   TokenStorage,
   StorageKeys,
+  // Navigation types
+  AuthNavigationOptions,
+  SelectAccountOptions,
+  RegisterOptions,
+  RecoverAccountOptions,
+  VerifyAccountOptions,
+  UpgradeAccountOptions,
+  SetupPasskeyOptions,
+  SetupAddressOptions,
+  AddAccountOptions,
+  RevokeTokenOptions,
+  AuthUrl,
 } from "./types";
 
 export { AuthError } from "./types";

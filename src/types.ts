@@ -295,3 +295,74 @@ export interface LogoutOptions {
   /** Only clear local session, don't redirect @default false */
   localOnly?: boolean;
 }
+
+// ============================================
+// Navigation Options
+// ============================================
+
+/** Base options for all auth navigation redirects */
+export interface AuthNavigationOptions {
+  /** URL to return to after the action completes */
+  returnTo?: string;
+  /** OAuth client_id for branded experiences */
+  clientId?: string;
+  /** Open in a new tab/window instead of redirecting */
+  openInNewTab?: boolean;
+}
+
+export interface SelectAccountOptions extends AuthNavigationOptions {
+  /** Pre-select a specific email/account */
+  loginHint?: string;
+}
+
+export interface RegisterOptions extends AuthNavigationOptions {
+  /** Pre-fill email on register form */
+  email?: string;
+  /** Pre-fill first name */
+  firstName?: string;
+  /** Pre-fill last name */
+  lastName?: string;
+  /** UI locale preference */
+  uiLocales?: string;
+}
+
+export interface RecoverAccountOptions extends AuthNavigationOptions {
+  /** Pre-fill email for recovery */
+  email?: string;
+}
+
+export interface VerifyAccountOptions extends AuthNavigationOptions {
+  /** Email to verify */
+  email?: string;
+}
+
+export interface UpgradeAccountOptions extends AuthNavigationOptions {
+  /** Scopes to request on upgrade */
+  scopes?: string[];
+}
+
+export interface SetupPasskeyOptions extends AuthNavigationOptions {}
+
+export interface SetupAddressOptions extends AuthNavigationOptions {}
+
+export interface AddAccountOptions extends AuthNavigationOptions {
+  /** Pre-fill email hint for the new account */
+  loginHint?: string;
+}
+
+export interface RevokeTokenOptions {
+  /** Specific token to revoke. If not provided, revokes current access token */
+  token?: string;
+  /** Token type hint: "access_token" or "refresh_token" */
+  tokenTypeHint?: "access_token" | "refresh_token";
+}
+
+/** Result of URL builder methods (non-redirecting) */
+export interface AuthUrl {
+  /** The full URL */
+  url: string;
+  /** Open the URL via redirect */
+  redirect: () => void;
+  /** Open the URL in a new tab */
+  open: () => Window | null;
+}

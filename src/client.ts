@@ -16,6 +16,17 @@ import type {
   LoginOptions,
   LogoutOptions,
   DecodedIdToken,
+  SelectAccountOptions,
+  RegisterOptions,
+  RecoverAccountOptions,
+  VerifyAccountOptions,
+  UpgradeAccountOptions,
+  SetupPasskeyOptions,
+  SetupAddressOptions,
+  AddAccountOptions,
+  RevokeTokenOptions,
+  AuthNavigationOptions,
+  AuthUrl,
 } from "./types";
 import { AuthError } from "./types";
 import {
@@ -450,6 +461,203 @@ export class DouveryAuthClient {
     return tokens.accessToken;
   }
 
+  // ============================================
+  // Navigation Methods
+  // ============================================
+
+  /** Redirect to select/switch account */
+  selectAccount(options: SelectAccountOptions = {}): void {
+    const url = this.buildSelectAccountUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build select-account URL without redirecting */
+  buildSelectAccountUrl(options: SelectAccountOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    if (options.loginHint) params.set("login_hint", options.loginHint);
+    return this.createAuthUrl("/select-account", params);
+  }
+
+  /** Redirect to add another account (multi-session) */
+  addAccount(options: AddAccountOptions = {}): void {
+    const url = this.buildAddAccountUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build add-account URL without redirecting */
+  buildAddAccountUrl(options: AddAccountOptions = {}): AuthUrl {
+    const params = new URLSearchParams({ add_account: "true" });
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    if (options.loginHint) params.set("login_hint", options.loginHint);
+    return this.createAuthUrl("/login", params);
+  }
+
+  /** Redirect to register a new account */
+  register(options: RegisterOptions = {}): void {
+    const url = this.buildRegisterUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build register URL without redirecting */
+  buildRegisterUrl(options: RegisterOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    if (options.email) params.set("email", options.email);
+    if (options.firstName) params.set("first_name", options.firstName);
+    if (options.lastName) params.set("last_name", options.lastName);
+    if (options.uiLocales) params.set("ui_locales", options.uiLocales);
+    return this.createAuthUrl("/register", params);
+  }
+
+  /** Redirect to recover account (forgot password) */
+  recoverAccount(options: RecoverAccountOptions = {}): void {
+    const url = this.buildRecoverAccountUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build recover-account URL without redirecting */
+  buildRecoverAccountUrl(options: RecoverAccountOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    if (options.email) params.set("email", options.email);
+    return this.createAuthUrl("/recover-account", params);
+  }
+
+  /** Redirect to verify account (email verification) */
+  verifyAccount(options: VerifyAccountOptions = {}): void {
+    const url = this.buildVerifyAccountUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build verify-account URL without redirecting */
+  buildVerifyAccountUrl(options: VerifyAccountOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    if (options.email) params.set("email", options.email);
+    return this.createAuthUrl("/verify-account", params);
+  }
+
+  /** Redirect to upgrade account (guest → full account) */
+  upgradeAccount(options: UpgradeAccountOptions = {}): void {
+    const url = this.buildUpgradeAccountUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build upgrade-account URL without redirecting */
+  buildUpgradeAccountUrl(options: UpgradeAccountOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    if (options.scopes?.length) params.set("scope", options.scopes.join(" "));
+    return this.createAuthUrl("/upgrade-account", params);
+  }
+
+  /** Redirect to passkey setup */
+  setupPasskey(options: SetupPasskeyOptions = {}): void {
+    const url = this.buildSetupPasskeyUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build setup-passkey URL without redirecting */
+  buildSetupPasskeyUrl(options: SetupPasskeyOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    return this.createAuthUrl("/setup-passkey", params);
+  }
+
+  /** Redirect to address setup */
+  setupAddress(options: SetupAddressOptions = {}): void {
+    const url = this.buildSetupAddressUrl(options);
+    this.navigate(url, options);
+  }
+
+  /** Build setup-address URL without redirecting */
+  buildSetupAddressUrl(options: SetupAddressOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.clientId) params.set("client_id", options.clientId);
+    return this.createAuthUrl("/setup-address", params);
+  }
+
+  /** Build a login URL without redirecting (useful for links/buttons) */
+  buildLoginUrl(options: LoginOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    if (options.loginHint) params.set("email", options.loginHint);
+    if (options.prompt) params.set("prompt", options.prompt);
+    if (options.uiLocales) params.set("ui_locales", options.uiLocales);
+    return this.createAuthUrl("/login", params);
+  }
+
+  /** Build a logout URL without redirecting */
+  buildLogoutUrl(options: LogoutOptions = {}): AuthUrl {
+    const params = new URLSearchParams();
+    if (options.returnTo) params.set("continue", options.returnTo);
+    return this.createAuthUrl("/logout", params);
+  }
+
+  /** Revoke a token (access or refresh) */
+  async revokeToken(options: RevokeTokenOptions = {}): Promise<void> {
+    this.log("Revoking token...");
+
+    const token =
+      options.token ?? (await this.tokenManager.getTokens())?.accessToken;
+    if (!token) {
+      throw new AuthError("invalid_token", "No token to revoke");
+    }
+
+    const revokeUrl = `${this.config.issuer}/oauth/revoke`;
+
+    const body = new URLSearchParams({
+      token,
+      client_id: this.config.clientId,
+    });
+    if (options.tokenTypeHint) {
+      body.set("token_type_hint", options.tokenTypeHint);
+    }
+
+    const response = await fetch(revokeUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new AuthError(
+        error.error ?? "server_error",
+        error.error_description ?? "Token revocation failed",
+      );
+    }
+
+    this.log("Token revoked successfully");
+  }
+
+  /** Check if the user's session is expired */
+  isSessionExpired(): boolean {
+    if (!this.state.tokens) return true;
+    return isTokenExpired(this.state.tokens.accessToken);
+  }
+
+  /** Check if user needs email verification */
+  needsEmailVerification(): boolean {
+    return this.state.user?.emailVerified === false;
+  }
+
+  /** Check if user is a guest account */
+  isGuestAccount(): boolean {
+    return (
+      (this.state.user as Record<string, unknown>)?.accountType === "guest"
+    );
+  }
+
   private tokenSetToInfo(tokenSet: TokenSet): TokenInfo {
     return {
       accessToken: tokenSet.access_token,
@@ -459,6 +667,30 @@ export class DouveryAuthClient {
       tokenType: tokenSet.token_type,
       scope: tokenSet.scope?.split(" ") ?? [],
     };
+  }
+
+  /** Build an AuthUrl object for a given path and params */
+  private createAuthUrl(path: string, params: URLSearchParams): AuthUrl {
+    const query = params.toString();
+    const url = `${this.config.issuer}${path}${query ? `?${query}` : ""}`;
+    return {
+      url,
+      redirect: () => {
+        window.location.href = url;
+      },
+      open: () => {
+        return window.open(url, "_blank");
+      },
+    };
+  }
+
+  /** Navigate to an auth URL, respecting openInNewTab option */
+  private navigate(authUrl: AuthUrl, options: AuthNavigationOptions): void {
+    if (options.openInNewTab) {
+      authUrl.open();
+    } else {
+      authUrl.redirect();
+    }
   }
 
   private async fetchUser(accessToken: string): Promise<User> {
