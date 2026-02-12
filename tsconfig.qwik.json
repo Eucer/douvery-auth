@@ -13,8 +13,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@builder.io/qwik",
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "@douvery/auth": ["./src/index.ts"]
+    }
   },
-  "include": ["src/qwik/**/*", "src/index.ts", "src/types.ts", "src/client.ts", "src/pkce.ts", "src/storage.ts"],
+  "include": ["src/qwik/**/*", "src/session/**/*", "src/index.ts", "src/types.ts", "src/client.ts", "src/pkce.ts", "src/storage.ts"],
   "exclude": ["node_modules", "dist", "src/react"]
 }

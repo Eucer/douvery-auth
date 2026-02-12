@@ -59,6 +59,7 @@ export {
 // Storage
 export {
   createStorage,
+  createServerBridgedStorage,
   MemoryStorage,
   LocalStorage,
   SessionStorage,
@@ -66,3 +67,14 @@ export {
   TokenManager,
   STORAGE_KEYS,
 } from "./storage";
+export type { ServerBridgedStorageOptions } from "./storage";
+
+// Session types (re-exported for convenience; full module at @douvery/auth/session)
+export type {
+  SessionResolverConfig,
+  CookieAdapter,
+  CookieSetOptions,
+  RefreshResult,
+  SessionLogger,
+  SessionResolver,
+} from "./session/types";

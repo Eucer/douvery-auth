@@ -247,3 +247,207 @@ export class TokenManager {
     await this.storage.clear();
   }
 }
+
+// ============================================================================
+// Server-Bridged Storage
+// ============================================================================
+
+/**
+ * Options for createServerBridgedStorage.
+ *
+ * Use this when tokens are managed server-side (httpOnly cookies)
+ * but the OAuth/PKCE flow needs client-side ephemeral storage.
+ */
+export interface ServerBridgedStorageOptions {
+  /**
+   * Name of a **non-httpOnly** cookie that holds the access token
+   * expiration timestamp (in milliseconds). Used to infer whether
+   * a valid session exists without exposing the actual tokens.
+   */
+  tokenExpirationCookie: string;
+
+  /**
+   * Placeholder value returned by `get()` for server-managed keys
+   * (accessToken, refreshToken). Signals to the caller that the
+   * real token exists but is not readable from JS.
+   * @default "__server_managed__"
+   */
+  serverManagedPlaceholder?: string;
+
+  /**
+   * Enable debug logging.
+   * @default false
+   */
+  debug?: boolean;
+}
+
+/** Keys whose real values live in httpOnly cookies */
+const SERVER_TOKEN_KEYS = new Set([
+  STORAGE_KEYS.accessToken,
+  STORAGE_KEYS.refreshToken,
+  STORAGE_KEYS.idToken,
+]);
+
+/** Keys that are ephemeral to the OAuth/PKCE flow */
+const PKCE_KEYS = new Set([
+  STORAGE_KEYS.state,
+  STORAGE_KEYS.nonce,
+  STORAGE_KEYS.codeVerifier,
+  STORAGE_KEYS.returnTo,
+]);
+
+/**
+ * Read a cookie by name from `document.cookie` (client-side only).
+ * Returns null during SSR or if the cookie is not found.
+ */
+function readClientCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const cookies = document.cookie.split(";");
+  for (const c of cookies) {
+    const [key, ...parts] = c.trim().split("=");
+    if (key === name) return decodeURIComponent(parts.join("="));
+  }
+  return null;
+}
+
+/** Safe sessionStorage accessor (no-op in SSR). */
+function safeSessionStorage(): globalThis.Storage | null {
+  if (typeof window === "undefined" || typeof sessionStorage === "undefined") {
+    return null;
+  }
+  return sessionStorage;
+}
+
+/**
+ * Creates a `TokenStorage` adapter for apps where **tokens are
+ * managed server-side** (e.g. httpOnly cookies set by routeLoader$/
+ * routeAction$) but the OAuth PKCE flow still needs ephemeral
+ * client-side storage for state, nonce, codeVerifier and returnTo.
+ *
+ * Behaviour per key category:
+ *
+ * | Category          | get()                                    | set() / remove() |
+ * |-------------------|------------------------------------------|-------------------|
+ * | accessToken       | returns placeholder if session is active | no-op (server)    |
+ * | refreshToken      | returns placeholder if session exists    | no-op (server)    |
+ * | idToken           | always null                              | no-op             |
+ * | expiresAt         | reads from expiration cookie             | no-op (server)    |
+ * | state/nonce/etc.  | sessionStorage                           | sessionStorage    |
+ *
+ * @example
+ * ```ts
+ * import { createServerBridgedStorage } from '@douvery/auth';
+ *
+ * const bridgedStorage = createServerBridgedStorage({
+ *   tokenExpirationCookie: 'dou_token_exp',
+ *   debug: import.meta.env.DEV,
+ * });
+ *
+ * const config: DouveryAuthConfig = {
+ *   clientId: 'my-app',
+ *   redirectUri: '/callback',
+ *   customStorage: bridgedStorage,
+ *   autoRefresh: false, // server handles refresh
+ * };
+ * ```
+ */
+export function createServerBridgedStorage(
+  options: ServerBridgedStorageOptions,
+): TokenStorage {
+  const {
+    tokenExpirationCookie,
+    serverManagedPlaceholder = "__server_managed__",
+    debug = false,
+  } = options;
+
+  function log(msg: string) {
+    if (debug) console.debug(`[ServerBridgedStorage] ${msg}`);
+  }
+
+  return {
+    get(key: string): string | null {
+      // -- Access token: infer from expiration cookie --
+      if (key === STORAGE_KEYS.accessToken) {
+        const exp = readClientCookie(tokenExpirationCookie);
+        if (exp) {
+          const ms = parseInt(exp, 10);
+          if (!isNaN(ms) && ms > Date.now()) return serverManagedPlaceholder;
+        }
+        return null;
+      }
+
+      // -- Refresh token: infer existence from expiration cookie --
+      if (key === STORAGE_KEYS.refreshToken) {
+        const exp = readClientCookie(tokenExpirationCookie);
+        return exp ? serverManagedPlaceholder : null;
+      }
+
+      // -- ID token: not stored in this system --
+      if (key === STORAGE_KEYS.idToken) return null;
+
+      // -- Expiration timestamp --
+      if (key === STORAGE_KEYS.expiresAt) {
+        return readClientCookie(tokenExpirationCookie);
+      }
+
+      // -- PKCE/ephemeral keys -> sessionStorage --
+      if (PKCE_KEYS.has(key)) {
+        return safeSessionStorage()?.getItem(key) ?? null;
+      }
+
+      // -- Fallback: sessionStorage for unknown keys --
+      return safeSessionStorage()?.getItem(key) ?? null;
+    },
+
+    set(key: string, value: string): void {
+      if (SERVER_TOKEN_KEYS.has(key) || key === STORAGE_KEYS.expiresAt) {
+        log(`Ignoring set("${key}") – managed by server`);
+        return;
+      }
+      const ss = safeSessionStorage();
+      if (ss) {
+        try {
+          ss.setItem(key, value);
+        } catch (e) {
+          if (debug)
+            console.warn(
+              "[ServerBridgedStorage] sessionStorage.setItem failed:",
+              e,
+            );
+        }
+      }
+    },
+
+    remove(key: string): void {
+      if (SERVER_TOKEN_KEYS.has(key) || key === STORAGE_KEYS.expiresAt) {
+        log(`Ignoring remove("${key}") – managed by server`);
+        return;
+      }
+      const ss = safeSessionStorage();
+      if (ss) {
+        try {
+          ss.removeItem(key);
+        } catch (e) {
+          if (debug)
+            console.warn(
+              "[ServerBridgedStorage] sessionStorage.removeItem failed:",
+              e,
+            );
+        }
+      }
+    },
+
+    clear(): void {
+      const ss = safeSessionStorage();
+      if (!ss) return;
+      for (const key of PKCE_KEYS) {
+        try {
+          ss.removeItem(key);
+        } catch {
+          // silently ignore
+        }
+      }
+      log("PKCE ephemeral data cleared from sessionStorage");
+    },
+  };
+}

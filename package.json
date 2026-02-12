@@ -1,6 +1,6 @@
 {
   "name": "@douvery/auth",
-  "version": "0.3.0",
+  "version": "0.4.1",
   "description": "OAuth 2.0/OIDC client for Douvery authentication",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,25 +11,28 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./session": {
+      "import": "./dist/session/index.js",
+      "types": "./dist/session/index.d.ts"
+    },
     "./react": {
       "import": "./dist/react/index.js",
       "types": "./dist/react/index.d.ts"
     },
     "./qwik": {
-      "import": "./dist/qwik/index.js",
+      "import": "./src/qwik/index.tsx",
       "types": "./dist/qwik/index.d.ts"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/qwik"
   ],
   "scripts": {
-    "build": "npm run clean && npm run build:core && npm run build:react && npm run build:qwik",
-    "build:core": "tsup src/index.ts --format esm --dts --out-dir dist",
-    "build:react": "tsup src/react/index.tsx --format esm --dts --out-dir dist/react --external react --external @douvery/auth --tsconfig tsconfig.react.json",
-    "build:qwik": "tsup src/qwik/index.tsx --format esm --dts --out-dir dist/qwik --external @builder.io/qwik --external @douvery/auth --tsconfig tsconfig.qwik.json",
-    "dev": "tsup --watch",
-    "clean": "rm -rf dist"
+    "build": "npm run clean && node ./node_modules/tsup/dist/cli-default.js",
+    "dev": "node ./node_modules/tsup/dist/cli-default.js --watch",
+    "clean": "rm -rf dist",
+    "deploy:npm": "npm run build && (npm whoami --registry=https://registry.npmjs.org/ >/dev/null 2>&1 || npm login) && npm publish --access public --tag latest"
   },
   "keywords": [
     "douvery",
@@ -44,11 +47,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/douvery/douvery-auth.git"
+    "url": "git+https://github.com/douvery/douvery-auth.git"
   },
   "peerDependencies": {
-    "react": ">=18.0.0",
-    "@builder.io/qwik": ">=1.0.0"
+    "@builder.io/qwik": ">=1.0.0",
+    "react": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -59,10 +62,11 @@
     }
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.4.0",
-    "react": "^18.2.0",
+    "@builder.io/qwik": "^1.9.0",
+    "@types/node": "^25.2.3",
     "@types/react": "^18.2.0",
-    "@builder.io/qwik": "^1.9.0"
+    "react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
   }
 }

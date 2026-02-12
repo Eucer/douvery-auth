@@ -58,6 +58,13 @@ export class DouveryAuthClient {
   };
 
   constructor(config: DouveryAuthConfig) {
+    if (!config) {
+      throw new Error(
+        "[DouveryAuthClient] config is required. " +
+          "Make sure getDouveryAuthConfig() returns a valid DouveryAuthConfig object.",
+      );
+    }
+
     this.config = {
       issuer: DEFAULT_ISSUER,
       scopes: DEFAULT_SCOPES,
@@ -732,6 +739,7 @@ export class DouveryAuthClient {
   private async getDiscovery(): Promise<OIDCDiscovery> {
     if (this.discovery) return this.discovery;
     const discoveryUrl = `${this.config.issuer}/.well-known/openid-configuration`;
+    this.log("Fetching discovery from:", discoveryUrl);
     const response = await fetch(discoveryUrl);
     if (!response.ok) {
       throw new AuthError(
@@ -739,8 +747,35 @@ export class DouveryAuthClient {
         "Failed to fetch discovery document",
       );
     }
-    this.discovery = await response.json();
-    return this.discovery!;
+    const doc: OIDCDiscovery = await response.json();
+
+    // Rewrite endpoints to match the configured issuer.
+    // This handles cases where the discovery document returns a different
+    // base URL (e.g., production URL in dev mode, or behind a reverse proxy).
+    const docIssuer = doc.issuer;
+    const configIssuer = this.config.issuer!;
+    if (docIssuer && docIssuer !== configIssuer) {
+      this.log(
+        `Rewriting discovery endpoints: "${docIssuer}" -> "${configIssuer}"`,
+      );
+      const rewrite = (url: string) => url.replace(docIssuer, configIssuer);
+      doc.issuer = configIssuer;
+      doc.authorization_endpoint = rewrite(doc.authorization_endpoint);
+      doc.token_endpoint = rewrite(doc.token_endpoint);
+      if (doc.userinfo_endpoint)
+        doc.userinfo_endpoint = rewrite(doc.userinfo_endpoint);
+      if (doc.end_session_endpoint)
+        doc.end_session_endpoint = rewrite(doc.end_session_endpoint);
+      if (doc.jwks_uri) doc.jwks_uri = rewrite(doc.jwks_uri);
+      if (doc.revocation_endpoint)
+        doc.revocation_endpoint = rewrite(doc.revocation_endpoint);
+      if (doc.introspection_endpoint)
+        doc.introspection_endpoint = rewrite(doc.introspection_endpoint);
+    }
+
+    this.log("authorization_endpoint:", doc.authorization_endpoint);
+    this.discovery = doc;
+    return this.discovery;
   }
 
   private setupAutoRefresh(): void {

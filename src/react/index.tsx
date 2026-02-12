@@ -29,7 +29,7 @@ import {
   type AddAccountOptions,
   type RevokeTokenOptions,
   type AuthUrl,
-} from "../index";
+} from "@douvery/auth";
 
 interface DouveryAuthContextValue {
   state: AuthState;
@@ -381,7 +381,7 @@ export function useSessionStatus() {
   );
 }
 
-export { DouveryAuthClient, createDouveryAuth } from "../index";
+export { DouveryAuthClient, createDouveryAuth } from "@douvery/auth";
 export type {
   DouveryAuthConfig,
   AuthState,
@@ -398,4 +398,4 @@ export type {
   AddAccountOptions,
   RevokeTokenOptions,
   AuthUrl,
-} from "../index";
+} from "@douvery/auth";

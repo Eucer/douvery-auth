@@ -12,7 +12,10 @@
     "sourceMap": true,
     "jsx": "react-jsx",
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "@douvery/auth": ["./src/index.ts"]
+    }
   },
   "include": ["src/react/**/*", "src/index.ts", "src/types.ts", "src/client.ts", "src/pkce.ts", "src/storage.ts"],
   "exclude": ["node_modules", "dist", "src/qwik"]
