@@ -1,80 +1,112 @@
 /**
- * @douvery/auth - Core Package
- * OAuth 2.0/OIDC client for Douvery authentication
+ * @douvery/auth - Session-based auth SDK
+ * Browser stores only an HttpOnly session cookie.
  */
 
-// Client
-export { DouveryAuthClient, createDouveryAuth } from "./client";
+export {
+  DouverySessionClient,
+  createSessionClient,
+  getSession,
+  logout,
+  switchAccount,
+} from "./client";
 
-// Types
 export type {
-  DouveryAuthConfig,
-  TokenSet,
-  TokenInfo,
-  User,
-  AuthState,
-  AuthStatus,
-  AuthEvent,
-  AuthEventHandler,
-  AuthErrorCode,
-  OIDCDiscovery,
-  CallbackResult,
-  LoginOptions,
+  SessionClientConfig,
+  SessionStatus,
+  SessionState,
+  SessionUser,
+  SessionPayload,
+  SessionErrorCode,
+  SessionEvent,
+  SessionEventHandler,
+  GetSessionOptions,
   LogoutOptions,
-  DecodedIdToken,
-  PKCEPair,
-  TokenStorage,
-  StorageKeys,
-  // Navigation types
-  AuthNavigationOptions,
-  SelectAccountOptions,
-  RegisterOptions,
-  RecoverAccountOptions,
-  VerifyAccountOptions,
-  UpgradeAccountOptions,
-  SetupPasskeyOptions,
-  SetupAddressOptions,
-  AddAccountOptions,
-  RevokeTokenOptions,
-  AuthUrl,
+  SwitchAccountOptions,
 } from "./types";
 
-export { AuthError } from "./types";
+export { SessionError } from "./types";
 
-// PKCE utilities
-export {
-  generateCodeVerifier,
-  generateCodeChallenge,
-  generateState,
-  generateNonce,
-  generatePKCEPair,
-  verifyCodeChallenge,
-  decodeJWT,
-  isTokenExpired,
-  getTokenExpiration,
-  base64UrlEncode,
-  base64UrlDecode,
-} from "./pkce";
-
-// Storage
-export {
-  createStorage,
-  createServerBridgedStorage,
-  MemoryStorage,
-  LocalStorage,
-  SessionStorage,
-  CookieStorage,
-  TokenManager,
-  STORAGE_KEYS,
-} from "./storage";
-export type { ServerBridgedStorageOptions } from "./storage";
-
-// Session types (re-exported for convenience; full module at @douvery/auth/session)
+export { createCurrentUserResolver } from "./current-user";
 export type {
-  SessionResolverConfig,
+  CreateCurrentUserResolverOptions,
+  CurrentUserResolver,
+} from "./current-user";
+
+export {
+  decodeJwtClaims,
+  isJwtExpiredFromClaims,
+  isJwtExpired,
+  getJwtTimeRemaining,
+  getJwtSubject,
+  verifyJwtAudience,
+} from "./jwt";
+
+export type { JwtClaimsBase } from "./jwt";
+
+export type {
   CookieAdapter,
   CookieSetOptions,
-  RefreshResult,
-  SessionLogger,
-  SessionResolver,
+  SessionServiceConfig,
+  RequireAuthOptions,
+  RequireAuthResult,
+  SessionService,
 } from "./session/types";
+
+export {
+  createSessionUserInfoResolver,
+  createSessionTokenResolver,
+  fetchWithTimeout,
+  hasDefinitiveSessionFailure,
+  DEFAULT_SESSION_TOKEN_FETCH_TIMEOUT_MS,
+  DEFAULT_SESSION_TOKEN_FALLBACK_CACHE_TTL_MS,
+  DEFAULT_SESSION_TOKEN_CACHE_TTL_MIN_MS,
+  DEFAULT_SESSION_TOKEN_CACHE_TTL_MAX_MS,
+  DEFAULT_SESSION_TOKEN_CACHE_TTL_FACTOR,
+  DEFAULT_SESSION_USERINFO_CACHE_TTL_MS,
+} from "./session";
+
+export type {
+  SessionTokenResolverLogContext,
+  CreateSessionTokenResolverOptions,
+  SessionTokenResolver,
+  SessionUserInfoFailure,
+  SessionUserInfoFetchResult,
+  InvalidSessionContext,
+  CreateSessionUserInfoResolverOptions,
+} from "./session";
+
+export {
+  DEFAULT_DANGEROUS_REDIRECT_PATTERNS,
+  containsDangerousRedirectCharacters,
+  isAllowedRedirectUrl,
+  sanitizeRedirectUrl,
+  buildSafeRedirectUrl,
+  extractRedirectParam,
+} from "./security";
+
+export type { RedirectSecurityOptions } from "./security";
+
+export {
+  DOUVERY_ALLOWED_REDIRECT_DOMAINS,
+  createDouveryRedirectSecurityOptions,
+} from "./security";
+
+export {
+  createAuthUrl,
+  createLoginUrl,
+  createSelectAccountUrl,
+  createLogoutUrl,
+  createVerifyAccountUrl,
+  createUpgradeAccountUrl,
+} from "./auth-web";
+
+export type {
+  AuthBaseOptions,
+  AuthUrlOptions,
+  LoginUrlOptions,
+  SelectAccountUrlOptions,
+  LogoutUrlOptions,
+  VerifyAccountUrlOptions,
+  UpgradeAccountUrlOptions,
+} from "./auth-web";

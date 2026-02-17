@@ -2,11 +2,11 @@
  * @douvery/auth/qwik - Session Adapter
  *
  * Adapts Qwik City's Cookie interface to the generic CookieAdapter
- * used by createSessionResolver().
+ * used by createSessionService().
  *
  * Memoized: returns the same adapter instance for the same Cookie object,
- * ensuring the resolver's per-request WeakMap cache works correctly when
- * multiple routeLoaders call getAccessToken() in the same SSR request.
+ * ensuring a stable adapter identity when multiple routeLoaders share
+ * the same Cookie object in the same SSR request.
  */
 
 import type { CookieAdapter, CookieSetOptions } from "@douvery/auth";
@@ -28,11 +28,10 @@ interface QwikCookieLike {
  * Adapter cache ensures the SAME CookieAdapter instance is returned
  * for the same Qwik Cookie object. This is critical because:
  *
- * 1. The resolver uses WeakMap<CookieAdapter> for per-request caching
+ * 1. Session utilities can use adapter identity for request-scoped logic
  * 2. Multiple routeLoaders in the same SSR request share the same Cookie
  * 3. Each routeLoader calls createQwikSessionAdapter(cookie)
- * 4. Without memoization, each call would create a different object
- *    → WeakMap would fail to deduplicate → duplicate network calls
+ * 4. Without memoization, each call would create a different adapter object
  */
 const adapterCache = new WeakMap<object, CookieAdapter>();
 
@@ -42,13 +41,13 @@ const adapterCache = new WeakMap<object, CookieAdapter>();
  * @example
  * ```typescript
  * import { createQwikSessionAdapter } from '@douvery/auth/qwik';
- * import { createSessionResolver } from '@douvery/auth/session';
+ * import { createSessionService } from '@douvery/auth/session';
  *
- * const resolver = createSessionResolver({ ... });
+ * const service = createSessionService({ ... });
  *
  * export const useMyLoader = routeLoader$(async ({ cookie }) => {
  *   const adapter = createQwikSessionAdapter(cookie);
- *   const token = await resolver.getAccessToken(adapter);
+ *   const session = await service.getSession(adapter);
  * });
  * ```
  */

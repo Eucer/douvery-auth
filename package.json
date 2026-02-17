@@ -1,7 +1,7 @@
 {
   "name": "@douvery/auth",
-  "version": "0.4.1",
-  "description": "OAuth 2.0/OIDC client for Douvery authentication",
+  "version": "0.4.2",
+  "description": "Session-based authentication SDK for Douvery (HttpOnly cookie model)",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -15,32 +15,26 @@
       "import": "./dist/session/index.js",
       "types": "./dist/session/index.d.ts"
     },
-    "./react": {
-      "import": "./dist/react/index.js",
-      "types": "./dist/react/index.d.ts"
-    },
     "./qwik": {
-      "import": "./src/qwik/index.tsx",
+      "import": "./dist/qwik/index.js",
       "types": "./dist/qwik/index.d.ts"
     }
   },
   "files": [
-    "dist",
-    "src/qwik"
+    "dist"
   ],
   "scripts": {
     "build": "npm run clean && node ./node_modules/tsup/dist/cli-default.js",
     "dev": "node ./node_modules/tsup/dist/cli-default.js --watch",
     "clean": "rm -rf dist",
+    "prepare": "npm run build",
     "deploy:npm": "npm run build && (npm whoami --registry=https://registry.npmjs.org/ >/dev/null 2>&1 || npm login) && npm publish --access public --tag latest"
   },
   "keywords": [
     "douvery",
     "auth",
-    "oauth",
-    "oidc",
-    "pkce",
-    "react",
+    "session",
+    "cookie",
     "qwik"
   ],
   "author": "Douvery",
@@ -50,13 +44,9 @@
     "url": "git+https://github.com/douvery/douvery-auth.git"
   },
   "peerDependencies": {
-    "@builder.io/qwik": ">=1.0.0",
-    "react": ">=18.0.0"
+    "@builder.io/qwik": ">=1.0.0"
   },
   "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
     "@builder.io/qwik": {
       "optional": true
     }
@@ -64,8 +54,6 @@
   "devDependencies": {
     "@builder.io/qwik": "^1.9.0",
     "@types/node": "^25.2.3",
-    "@types/react": "^18.2.0",
-    "react": "^18.2.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0"
   }

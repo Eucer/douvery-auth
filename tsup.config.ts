@@ -27,7 +27,7 @@ export default defineConfig([
   },
   // Qwik adapter - MUST externalize core and Qwik to avoid duplication
   {
-    entry: ["src/qwik/index.tsx"],
+    entry: ["src/qwik/index.ts"],
     format: ["esm"],
     dts: true,
     outDir: "dist/qwik",
@@ -43,19 +43,5 @@ export default defineConfig([
       "@douvery/auth/session",
     ],
     tsconfig: "tsconfig.qwik.json",
-  },
-  // React adapter - MUST externalize core and React to avoid duplication
-  {
-    entry: ["src/react/index.tsx"],
-    format: ["esm"],
-    dts: true,
-    outDir: "dist/react",
-    sourcemap: true,
-    minify: false,
-    splitting: false,
-    treeshake: true,
-    target: "es2022",
-    external: ["react", "@douvery/auth"],
-    tsconfig: "tsconfig.react.json",
   },
 ]);
